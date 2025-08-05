@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+  <head lang="en">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CYBER_SNAKE.EXE v2.1</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #00ff41;
+            --dark-green: #008f11;
+            --bright-green: #4dff4d;
+            --bg-black: #000000;
+            --danger-red: #ff4444;
+            --bright-red: #ff6666;
+            --mono-font: 'Share Tech Mono', 'Courier New', monospace;
+            --title-font: 'Orbitron', monospace;
+            --grid-size: 25;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-black);
+            color: var(--primary-green);
+            font-family: var(--mono-font);
+            margin: 0;
+            padding: 15px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 200%; height: 200%;
+            background: repeating-radial-gradient(circle at center, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 100px);
+            animation: move-grid 30s linear infinite;
+            z-index: -1;
+        }
+        @keyframes move-grid {
+            from { transform: translate(0, 0); }
+            to { transform: translate(-100px, -100px); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .title {
+            font-family: var(--title-font);
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            font-weight: 700;
+            color: var(--primary-green);
+            text-shadow: 0 0 8px var(--primary-green), 0 0 15px var(--primary-green);
+            letter-spacing: 0.1em;
+            margin: 0;
+        }
+        
+        #gameContainer {
+            width: 100%;
+            flex-grow: 1;
+            max-width: 500px;
+            border: 3px solid var(--primary-green);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3), inset 0 0 30px rgba(0, 255, 65, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a0a;
+        }
+        
+        .screen-flash {
+            animation: flash 0.15s ease-out;
+        }
+        @keyframes flash {
+            0% { box-shadow: 0 0 50px var(--bright-green), inset 0 0 50px var(--bright-green); }
+            100% { box-shadow: 0 0 30px rgba(0, 255, 65, 0.3), inset 0 0 30px rgba(0, 255, 65, 0.1); }
+        }
+
+        .stats-panel {
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.3);
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid var(--dark-green);
+            flex-shrink: 0;
+        }
+        
+        .stat-box { text-align: center; }
+        .stat-label { font-size: 0.8rem; color: var(--dark-green); text-transform: uppercase; }
+        .stat-value { font-family: var(--title-font); font-size: 1.8rem; font-weight: 700; color: var(--primary-green); text-shadow: 0 0 10px var(--primary-green); }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size), 1fr);
+            grid-template-rows: repeat(var(--grid-size), 1fr);
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+        }
+
+        .grid-cell {
+            position: relative;
+        }
+
+        .snake-head {
+            background: linear-gradient(45deg, var(--bright-green), var(--primary-green));
+            box-shadow: 0 0 15px var(--primary-green), inset 0 0 10px rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        .snake-head::before {
+            content: '';
+            position: absolute;
+            width: 25%;
+            height: 25%;
+            background: #000;
+            border-radius: 50%;
+            transition: all 0.1s;
+        }
+        .snake-head.dir-right::before { top: 20%; right: 20%; }
+        .snake-head.dir-left::before { top: 20%; left: 20%; }
+        .snake-head.dir-up::before { top: 20%; left: 20%; }
+        .snake-head.dir-down::before { bottom: 20%; left: 20%; }
+
+        .snake-body {
+            background: var(--primary-green);
+            border-radius: 2px;
+            transform: scale(0.9);
+        }
+
+        .food {
+            background: radial-gradient(circle, var(--bright-red), var(--danger-red));
+            box-shadow: 0 0 20px var(--danger-red), inset 0 0 10px rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: foodPulse 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes foodPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        .screen.visible { opacity: 1; pointer-events: all; }
+        .screen h1 { font-family: var(--title-font); font-size: clamp(1.5rem, 6vw, 2.5rem); font-weight: 900; color: var(--danger-red); text-shadow: 0 0 20px var(--danger-red), 0 0 40px var(--danger-red); letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 30px 0; }
+        .screen h1.start-title { color: var(--primary-green); text-shadow: 0 0 20px var(--primary-green), 0 0 40px var(--primary-green); }
+        .screen .final-stat-value { font-size: 2.5rem; margin-bottom: 40px; color: var(--primary-green); }
+        .screen button { padding: 20px 40px; background: transparent; border: 3px solid var(--primary-green); color: var(--primary-green); font-family: var(--title-font); font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border-radius: 10px; transition: all 0.3s ease; }
+        .screen button:hover { background: var(--primary-green); color: var(--bg-black); box-shadow: 0 0 40px var(--primary-green); }
+        
+        /* --- GLOBAL NAVIGATION MENU (Z-INDEX FIXED) --- */
+        .nav-toggle { position: fixed; top: 15px; right: 15px; width: 40px; height: 40px; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--dark-green); z-index: 2001; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; transition: all 0.3s ease; }
+        .nav-toggle:hover { background: rgba(0, 255, 65, 0.2); border-color: var(--primary-green); }
+        .nav-toggle span { display: block; width: 24px; height: 2px; background: var(--primary-green); transition: all 0.3s ease; }
+        .nav-toggle.is-active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-toggle.is-active span:nth-child(2) { opacity: 0; }
+        .nav-toggle.is-active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        .global-nav { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+        .global-nav.is-active { opacity: 1; pointer-events: all; }
+        .global-nav ul { list-style: none; text-align: center; padding: 0; }
+        .global-nav li { margin: 20px 0; opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease; }
+        .global-nav.is-active li { opacity: 1; transform: translateY(0); }
+        .global-nav.is-active li:nth-child(1) { transition-delay: 0.1s; }
+        .global-nav.is-active li:nth-child(2) { transition-delay: 0.15s; }
+        .global-nav.is-active li:nth-child(3) { transition-delay: 0.2s; }
+        .global-nav.is-active li:nth-child(4) { transition-delay: 0.25s; }
+        .global-nav.is-active li:nth-child(5) { transition-delay: 0.3s; }
+        .global-nav a { font-size: 1.5rem; color: var(--primary-green); text-decoration: none; text-transform: uppercase; letter-spacing: 0.2em; padding: 10px 20px; transition: all 0.3s ease; }
+        .global-nav a:hover { background: var(--primary-green); color: var(--bg-black); text-shadow: none; box-shadow: 0 0 25px var(--primary-green); }
+    </style>
+  </head>
+  <body>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle Navigation">
+        <span></span><span></span><span></span>
+    </button>
+    <nav class="global-nav" id="globalNav">
+<ul>
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="../me.html">Me</a></li>
+    <li><a href="../about.html">About</a></li>
+    <li><a href="../musings/musings.html">Musings</a></li>
+    <li><a href="arcade.html">Arcade</a></li>
+</ul>
+
+    </nav>
+
+    <div class="header">
+        <h1 class="title">CYBER_SNAKE.EXE</h1>
+    </div>
+
+    <div id="gameContainer">
+        <div class="stats-panel">
+            <div class="stat-box">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="scoreValue">0</div>
+            </div>
+        </div>
+        <div class="game-grid" id="gameGrid"></div>
+         <div class="screen visible" id="startScreen">
+            <h1 class="start-title">SYSTEM READY</h1>
+            <button id="startBtn">INITIATE</button>
+        </div>
+        <div class="screen" id="gameOverScreen">
+            <h1>CONNECTION LOST</h1>
+            <div class="final-stat-value" id="finalScore">0</div>
+            <button id="restartBtn">REBOOT SYSTEM</button>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 25;
+        const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+
+        let snake, food, direction, gameInterval, score;
+        let gameState = 'start';
+        let currentSpeed;
+        let canChangeDirection = true;
+        let isPaused = false; // For nav menu pause
+
+        const gameGrid = document.getElementById('gameGrid');
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreEl = document.getElementById('scoreValue');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreEl = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+        const startBtn = document.getElementById('startBtn');
+        const navToggle = document.getElementById('navToggle');
+        const globalNav = document.getElementById('globalNav');
+
+        function initGame() {
+            gameGrid.innerHTML = '';
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                gameGrid.appendChild(cell);
+            }
+            
+            snake = [Math.floor(TOTAL_CELLS / 2)];
+            direction = 1;
+            score = 0;
+            currentSpeed = 150;
+            canChangeDirection = true;
+            
+            placeFood();
+            updateDisplay();
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, currentSpeed);
+        }
+        
+        function startGame() {
+            gameState = 'playing';
+            startScreen.classList.remove('visible');
+            gameOverScreen.classList.remove('visible');
+            initGame();
+        }
+
+        function placeFood() {
+            do {
+                food = Math.floor(Math.random() * TOTAL_CELLS);
+            } while (snake.includes(food));
+        }
+
+        function gameLoop() {
+            if (gameState !== 'playing' || isPaused) return; // Check for pause
+            moveSnake();
+            if (checkCollisions()) return;
+            render();
+        }
+
+        function moveSnake() {
+            canChangeDirection = true;
+            const head = snake[0];
+            let newHead = head + direction;
+
+            if (direction === 1 && head % GRID_SIZE === GRID_SIZE - 1) newHead = head - (GRID_SIZE - 1);
+            else if (direction === -1 && head % GRID_SIZE === 0) newHead = head + (GRID_SIZE - 1);
+            else if (direction === GRID_SIZE && newHead >= TOTAL_CELLS) newHead = newHead - TOTAL_CELLS;
+            else if (direction === -GRID_SIZE && newHead < 0) newHead = newHead + TOTAL_CELLS;
+
+            snake.unshift(newHead);
+
+            if (newHead === food) {
+                score++;
+                placeFood();
+                gameContainer.classList.add('screen-flash');
+                setTimeout(() => gameContainer.classList.remove('screen-flash'), 150);
+                
+                currentSpeed = Math.max(50, currentSpeed - 5);
+                clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, currentSpeed);
+
+            } else {
+                snake.pop();
+            }
+        }
+
+        function checkCollisions() {
+            const head = snake[0];
+            if (snake.slice(1).includes(head)) {
+                endGame();
+                return true;
+            }
+            return false;
+        }
+
+        function render() {
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.className = 'grid-cell';
+            });
+
+            snake.forEach((pos, index) => {
+                const cell = gameGrid.children[pos];
+                if (cell) {
+                    cell.classList.add(index === 0 ? 'snake-head' : 'snake-body');
+                    if(index === 0) {
+                        if(direction === 1) cell.classList.add('dir-right');
+                        else if(direction === -1) cell.classList.add('dir-left');
+                        else if(direction === -GRID_SIZE) cell.classList.add('dir-up');
+                        else if(direction === GRID_SIZE) cell.classList.add('dir-down');
+                    }
+                }
+            });
+
+            const foodCell = gameGrid.children[food];
+            if (foodCell) {
+                foodCell.classList.add('food');
+            }
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            scoreEl.textContent = score;
+        }
+
+        function endGame() {
+            gameState = 'gameover';
+            clearInterval(gameInterval);
+            finalScoreEl.textContent = score;
+            gameOverScreen.classList.add('visible');
+        }
+
+        function changeDirection(newDirection) {
+            if (!canChangeDirection || gameState !== 'playing' || Math.abs(direction) === Math.abs(newDirection)) return;
+            direction = newDirection;
+            canChangeDirection = false;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': changeDirection(-GRID_SIZE); break;
+                case 'ArrowDown': changeDirection(GRID_SIZE); break;
+                case 'ArrowLeft': changeDirection(-1); break;
+                case 'ArrowRight': changeDirection(1); break;
+            }
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchmove', e => {
+            if (!touchStartX || !touchStartY) return;
+            let touchEndX = e.touches[0].clientX;
+            let touchEndY = e.touches[0].clientY;
+            let dx = touchEndX - touchStartX;
+            let dy = touchEndY - touchStartY;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                changeDirection(dx > 0 ? 1 : -1);
+            } else {
+                changeDirection(dy > 0 ? GRID_SIZE : -GRID_SIZE);
+            }
+            touchStartX = 0;
+            touchStartY = 0;
+        }, { passive: true });
+
+        restartBtn.addEventListener('click', startGame);
+        startBtn.addEventListener('click', startGame);
+
+        // --- Global Nav Toggle ---
+        if (navToggle && globalNav) {
+            navToggle.addEventListener('click', () => {
+                const isOpening = !globalNav.classList.contains('is-active');
+                navToggle.classList.toggle('is-active');
+                globalNav.classList.toggle('is-active');
+                
+                // Pause/resume game when nav is opened/closed
+                if (gameState === 'playing') {
+                    isPaused = isOpening;
+                }
+            });
+        }
+
+    </script>
+  </body>
+</html>

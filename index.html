@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04src</title>
+    <link rel="icon" type="image/png" href="images/favicon.png.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --primary-green: #00ff41;
+          --secondary-green: #33ff66;
+          --dark-green: #008f11;
+          --bg-black: #000000;
+          --glow-sm: 0 0 5px rgba(0, 255, 65, 0.6);
+          --glow-md: 0 0 15px rgba(0, 255, 65, 0.8);
+          --glow-lg: 0 0 25px rgba(0, 255, 65, 1);
+          --mono-font: 'Share Tech Mono', 'Courier New', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-black); color: var(--primary-green); font-family: var(--mono-font); overflow-x: hidden; min-height: 100vh; }
+        .main-container { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+        .content-wrapper { max-width: 900px; /* Adjusted for a tighter grid */ width: 100%; margin: 0 auto; padding: 0 20px; flex: 1; display: flex; flex-direction: column; }
+        .hero-section { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 40px 0 20px 0; position: relative; }
+        .title-card-container { display: flex; justify-content: center; align-items: center; width: 100%; }
+        .title-card { width: 100%; max-width: 600px; height: auto; border: none; box-shadow: none; filter: none; }
+        
+        /* UPDATED FOR 2x2 GRID */
+        .navigation-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* This creates the 2-column layout */
+            gap: 25px;
+            margin: 40px 0;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-button-container { max-width: 400px; margin: 0 auto; width: 100%; }
+        .cyber-button { width: 100%; min-height: 120px; background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, rgba(0, 255, 65, 0.1) 50%, rgba(0, 255, 65, 0.05) 100%); border: 2px solid var(--dark-green); color: var(--primary-green); font-family: var(--mono-font); cursor: pointer; position: relative; overflow: hidden; clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px)); display: flex; align-items: center; justify-content: center; padding: 20px; transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease; }
+        .cyber-button:hover { border-color: var(--primary-green); background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 65, 0.2) 50%, rgba(0, 255, 65, 0.1) 100%); box-shadow: var(--glow-lg), inset 0 0 20px rgba(0, 255, 65, 0.1); }
+        .button-content { text-align: center; z-index: 2; position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .button-title { font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: bold; text-transform: uppercase; letter-spacing: 0.15em; color: var(--primary-green); text-shadow: var(--glow-md); margin: 0; transition: color 0.3s ease, text-shadow 0.3s ease; }
+        .cyber-button:hover .button-title { color: var(--secondary-green); text-shadow: var(--glow-lg); }
+        .button-indicator { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .access-text { font-size: 0.9rem; color: var(--dark-green); letter-spacing: 0.3em; font-weight: bold; transition: color 0.3s ease, text-shadow 0.3s ease; }
+        .cyber-button:hover .access-text { color: var(--primary-green); text-shadow: var(--glow-sm); }
+        .arrow-sequence { display: flex; gap: 4px; align-items: center; }
+        .arrow { font-size: 1.1rem; color: var(--dark-green); transition: color 0.3s ease, text-shadow 0.3s ease; animation: arrowPulse 2s infinite; }
+        .arrow:nth-child(2) { animation-delay: 0.3s; }
+        .arrow:nth-child(3) { animation-delay: 0.6s; }
+        .cyber-button:hover .arrow { color: var(--primary-green); text-shadow: var(--glow-sm); }
+        .button-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at center, rgba(0, 255, 65, 0.15), transparent); opacity: 0; transition: opacity 0.3s ease; }
+        .cyber-button:hover .button-overlay { opacity: 1; }
+        .corner-brackets { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+        .bracket { position: absolute; font-size: 1.2rem; color: var(--dark-green); line-height: 1; transition: color 0.3s ease, text-shadow 0.3s ease; }
+        .bracket.top-left { top: 5px; left: 5px; } .bracket.top-right { top: 5px; right: 5px; } .bracket.bottom-left { bottom: 5px; left: 5px; } .bracket.bottom-right { bottom: 5px; right: 5px; }
+        .cyber-button:hover .bracket { color: var(--primary-green); text-shadow: var(--glow-sm); }
+        .terminal-footer { flex: 0 0 auto; padding: 30px 0; border-top: 1px solid var(--dark-green); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .system-status { display: flex; align-items: center; gap: 10px; }
+        .status-indicator { width: 12px; height: 12px; background: var(--primary-green); border-radius: 50%; box-shadow: var(--glow-sm); transition: opacity 0.3s ease; }
+        .status-text { font-size: 0.9rem; color: var(--primary-green); letter-spacing: 0.1em; }
+        .command-line { font-family: var(--mono-font); color: var(--secondary-green); text-shadow: var(--glow-sm); }
+        .prompt { color: var(--primary-green); }
+        .typing-cursor { animation: blink 1s infinite; color: var(--primary-green); text-shadow: var(--glow-sm); }
+        @keyframes arrowPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        /* On smaller screens, go back to a single column */
+        @media (max-width: 768px) {
+            .navigation-grid {
+                grid-template-columns: 1fr;
+            }
+            .content-wrapper { padding: 0 15px; }
+            .hero-section { margin: 20px 0; }
+            .nav-button-container { max-width: 100%; }
+            .cyber-button { min-height: 100px; padding: 15px; }
+            .terminal-footer { flex-direction: column; text-align: center; padding: 20px 0; }
+            .command-line { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <header class="hero-section">
+            <div class="title-card-container">
+                <img src="images/title-card.png" alt="Title Card" class="title-card" onerror="this.style.display='none'">
+            </div>
+        </header>
+
+        <div class="content-wrapper">
+            <main class="navigation-grid">
+                <article class="nav-button-container">
+                    <button class="cyber-button" onclick="window.location.href='me.html'">
+                        <div class="button-content"><h2 class="button-title">Me</h2><div class="button-indicator"><span class="access-text">[ACCESS]</span><div class="arrow-sequence"><span class="arrow">▶</span><span class="arrow">▶</span><span class="arrow">▶</span></div></div></div>
+                        <div class="button-overlay"></div><div class="corner-brackets"><span class="bracket top-left">┌</span><span class="bracket top-right">┐</span><span class="bracket bottom-left">└</span><span class="bracket bottom-right">┘</span></div>
+                    </button>
+                </article>
+                <article class="nav-button-container">
+                    <button class="cyber-button" onclick="window.location.href='musings/musings.html'">
+                        <div class="button-content"><h2 class="button-title">Musings</h2><div class="button-indicator"><span class="access-text">[ACCESS]</span><div class="arrow-sequence"><span class="arrow">▶</span><span class="arrow">▶</span><span class="arrow">▶</span></div></div></div>
+                        <div class="button-overlay"></div><div class="corner-brackets"><span class="bracket top-left">┌</span><span class="bracket top-right">┐</span><span class="bracket bottom-left">└</span><span class="bracket bottom-right">┘</span></div>
+                    </button>
+                </article>
+                <article class="nav-button-container">
+                    <button class="cyber-button" onclick="window.location.href='about.html'">
+                        <div class="button-content"><h2 class="button-title">About</h2><div class="button-indicator"><span class="access-text">[ACCESS]</span><div class="arrow-sequence"><span class="arrow">▶</span><span class="arrow">▶</span><span class="arrow">▶</span></div></div></div>
+                        <div class="button-overlay"></div><div class="corner-brackets"><span class="bracket top-left">┌</span><span class="bracket top-right">┐</span><span class="bracket bottom-left">└</span><span class="bracket bottom-right">┘</span></div>
+                    </button>
+                </article>
+                <article class="nav-button-container">
+                    <button class="cyber-button" onclick="window.location.href='arcade/arcade.html'">
+                        <div class="button-content"><h2 class="button-title">Arcade</h2><div class="button-indicator"><span class="access-text">[ACCESS]</span><div class="arrow-sequence"><span class="arrow">▶</span><span class="arrow">▶</span><span class="arrow">▶</span></div></div></div>
+                        <div class="button-overlay"></div><div class="corner-brackets"><span class="bracket top-left">┌</span><span class="bracket top-right">┐</span><span class="bracket bottom-left">└</span><span class="bracket bottom-right">┘</span></div>
+                    </button>
+                </article>
+            </main>
+            <footer class="terminal-footer">
+                <div class="system-status"><span class="status-indicator"></span><span class="status-text">SYSTEM ONLINE</span></div>
+                <div class="command-line"><span class="prompt">ആനന്ദു </span><span class="typing-cursor">█
+                    
+                </span></div>
+            </footer>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusIndicator = document.querySelector('.status-indicator');
+            setInterval(() => { statusIndicator.style.opacity = statusIndicator.style.opacity === '0.3' ? '1' : '0.3'; }, 1000);
+        });
+    </script>
+</body>
+</html>

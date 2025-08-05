@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --primary-green: #00ff41;
+          --dark-green: #008f11;
+          --bg-black: #000000;
+          --glitch-red: #ff003c;
+          --glitch-cyan: #00e5ff;
+          --glow-md: 0 0 15px rgba(0, 255, 65, 0.7);
+          --mono-font: 'Share Tech Mono', 'Courier New', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-black); color: var(--primary-green); font-family: var(--mono-font); overflow-x: hidden; }
+        .main-container, .content-wrapper, .content-display { display: flex; flex-direction: column; }
+        .main-container { min-height: 100vh; }
+        .content-wrapper { max-width: 900px; width: 100%; margin: 0 auto; padding: 20px; flex: 1; }
+        .content-display { flex: 1; align-items: center; justify-content: center; margin: 40px 0; }
+        .content-frame { width: 100%; background: rgba(0, 255, 65, 0.02); border: 1px solid var(--dark-green); position: relative; padding: 30px 35px; overflow: hidden; }
+        .scanline-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%); background-size: 100% 6px; animation: scanline 8s linear infinite; opacity: 0.2; }
+        .frame-header { margin-bottom: 20px; text-align: center; }
+        .glitch { position: relative; font-size: clamp(2rem, 5vw, 3rem); font-weight: bold; text-transform: uppercase; letter-spacing: 0.2em; color: var(--primary-green); text-shadow: var(--glow-md); animation: glitch-skew 1s infinite linear alternate-reverse; }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-black); overflow: hidden; }
+        .glitch::before { left: 2px; text-shadow: -2px 0 var(--glitch-red); animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -2px 0 var(--glitch-cyan), 2px 2px var(--glitch-red); animation: glitch-anim-2 3s infinite linear alternate-reverse; }
+        .content-divider { height: 2px; background: var(--dark-green); box-shadow: var(--glow-md); margin-bottom: 25px; }
+        .list-intro { padding: 0 5px 20px; line-height: 1.7; border-bottom: 1px dashed var(--dark-green); font-size: 1.1rem; }
+        .list-item { border: 1px solid transparent; margin-top: 25px; transition: border-color 0.3s ease, background-color 0.3s ease; }
+        .list-item:hover { border-color: var(--dark-green); background: rgba(0, 255, 65, 0.05); }
+        .item-link { display: block; padding: 20px; text-decoration: none; color: var(--primary-green); }
+        .item-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; }
+        .item-title { font-size: 1.5rem; letter-spacing: 0.1em; color: var(--primary-green); text-shadow: var(--glow-md); text-transform: uppercase; margin: 0; }
+        .item-date { font-family: var(--mono-font); color: var(--dark-green); font-weight: bold; }
+        .item-summary { font-size: 1rem; line-height: 1.6; margin-bottom: 15px; color: var(--primary-green); opacity: 0.8; }
+        .item-access-prompt { text-align: right; font-weight: bold; letter-spacing: 0.1em; color: var(--dark-green); transition: color 0.3s ease, text-shadow 0.3s ease; }
+        .list-item:hover .item-access-prompt { color: var(--primary-green); text-shadow: var(--glow-md); }
+        .arrow-sequence { margin-left: 10px; }
+        .corner-brackets { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+        .bracket { position: absolute; font-size: 1.2rem; color: var(--dark-green); line-height: 1; }
+        .bracket.top-left { top: 5px; left: 5px; } .bracket.top-right { top: 5px; right: 5px; } .bracket.bottom-left { bottom: 5px; left: 5px; } .bracket.bottom-right { bottom: 5px; right: 5px; }
+        .terminal-footer { flex: 0 0 auto; padding: 30px 0; border-top: 1px solid var(--dark-green); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .system-status { display: flex; align-items: center; gap: 10px; }
+        .status-indicator { width: 12px; height: 12px; background: var(--primary-green); border-radius: 50%; box-shadow: var(--glow-md); transition: opacity 0.3s ease; }
+        .status-text { font-size: 0.9rem; letter-spacing: 0.1em; }
+        .command-line { color: var(--primary-green); text-shadow: var(--glow-md); }
+        .prompt, .typing-cursor { color: var(--primary-green); }
+        .typing-cursor { animation: blink 1s infinite; }
+        @keyframes scanline { from { background-position: 0 0; } to { background-position: 0 100vh; } }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(15% 0 86% 0); } 20% { clip-path: inset(50% 0 23% 0); } 40% { clip-path: inset(22% 0 49% 0); } 60% { clip-path: inset(89% 0 3% 0); } 80% { clip-path: inset(45% 0 45% 0); } 100% { clip-path: inset(73% 0 9% 0); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(79% 0 13% 0); } 20% { clip-path: inset(40% 0 45% 0); } 40% { clip-path: inset(83% 0 6% 0); } 60% { clip-path: inset(33% 0 34% 0); } 80% { clip-path: inset(5% 0 89% 0); } 100% { clip-path: inset(92% 0 4% 0); } }
+        @keyframes glitch-skew { 0% { transform: skewX(0deg); } 5% { transform: skewX(2deg); } 10% { transform: skewX(-2deg); } 15% { transform: skewX(0deg); } 100% { transform: skewX(0deg); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .nav-toggle { position: fixed; top: 20px; right: 20px; width: 40px; height: 40px; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--dark-green); z-index: 1001; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; transition: all 0.3s ease; }
+        .nav-toggle:hover { background: rgba(0, 255, 65, 0.2); border-color: var(--primary-green); }
+        .nav-toggle span { display: block; width: 24px; height: 2px; background: var(--primary-green); transition: all 0.3s ease; }
+        .nav-toggle.is-active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-toggle.is-active span:nth-child(2) { opacity: 0; }
+        .nav-toggle.is-active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        .global-nav { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+        .global-nav.is-active { opacity: 1; pointer-events: all; }
+        .global-nav ul { list-style: none; text-align: center; }
+        .global-nav li { margin: 20px 0; opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease; }
+        .global-nav.is-active li { opacity: 1; transform: translateY(0); }
+        .global-nav.is-active li:nth-child(1) { transition-delay: 0.1s; }
+        .global-nav.is-active li:nth-child(2) { transition-delay: 0.15s; }
+        .global-nav.is-active li:nth-child(3) { transition-delay: 0.2s; }
+        .global-nav.is-active li:nth-child(4) { transition-delay: 0.25s; }
+        .global-nav.is-active li:nth-child(5) { transition-delay: 0.3s; }
+        .global-nav a { font-size: 2rem; color: var(--primary-green); text-decoration: none; text-transform: uppercase; letter-spacing: 0.2em; padding: 10px 20px; transition: all 0.3s ease; }
+        .global-nav a:hover { background: var(--primary-green); color: var(--bg-black); text-shadow: none; box-shadow: 0 0 25px var(--primary-green); }
+        @media (max-width: 768px) { .content-wrapper { padding: 15px; } .content-display { margin: 20px 0; } .content-frame { padding: 20px; } .terminal-footer { flex-direction: column; text-align: center; padding-top: 20px; } .nav-toggle { top: 15px; right: 15px; } .global-nav a { font-size: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle Navigation">
+        <span></span><span></span><span></span>
+    </button>
+    <nav class="global-nav" id="globalNav">
+<ul>
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="../me.html">Me</a></li>
+    <li><a href="../about.html">About</a></li>
+    <li><a href="../musings/musings.html">Musings</a></li>
+    <li><a href="arcade.html">Arcade</a></li>
+</ul>
+
+    </nav>
+    <div class="main-container">
+        <div class="content-wrapper">
+            <main class="content-display">
+                <div class="content-frame">
+                    <div class="scanline-overlay"></div>
+                    <div class="frame-header">
+                        <h1 class="post-title glitch" data-text="Arcade">Arcade</h1>
+                    </div>
+                    <div class="content-divider"></div>
+                    <div class="list-intro">
+                        A collection of interactive experiments, simulations, and small games.
+                    </div>
+                    <div class="post-list">
+                        <!-- NEW SNAKE GAME ENTRY -->
+                        <article class="list-item">
+                            <a href="snake.html" class="item-link">
+                                <div class="item-header">
+                                    <h2 class="item-title">CYBER_SNAKE.EXE</h2>
+                                    <time class="item-date">GAME</time>
+                                </div>
+                                <p class="item-summary">Navigate a growing data stream through a digital grid. Consume data packets to grow longer, but avoid colliding with your own tail or the system will crash.</p>
+                                <div class="item-access-prompt"><span>[EXECUTE]</span><span class="arrow-sequence">▶▶▶</span></div>
+                            </a>
+                        </article>
+                        
+                        <article class="list-item">
+                            <a href="game.html" class="item-link">
+                                <div class="item-header">
+                                    <h2 class="item-title">Vector Void</h2>
+                                    <time class="item-date">GAME</time>
+                                </div>
+                                <p class="item-summary">A retro-futuristic space shooter designed for mobile. Use the virtual joystick to dodge enemies, shoot targets, and boost through a grid of stars.</p>
+                                <div class="item-access-prompt"><span>[PLAY_NOW]</span><span class="arrow-sequence">▶▶▶</span></div>
+                            </a>
+                        </article>
+                    </div>
+                    <div class="corner-brackets">
+                        <span class="bracket top-left">┌</span><span class="bracket top-right">┐</span>
+                        <span class="bracket bottom-left">└</span><span class="bracket bottom-right">┘</span>
+                    </div>
+                </div>
+            </main>
+            <footer class="terminal-footer">
+                <div class="system-status"><span class="status-indicator"></span><span class="status-text">SYSTEM ONLINE</span></div>
+                <div class="command-line"><span class="prompt">ആനന്ദു </span><span class="typing-cursor">█</span></div>
+            </footer>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navToggle = document.getElementById('navToggle');
+            const globalNav = document.getElementById('globalNav');
+            if (navToggle && globalNav) {
+                navToggle.addEventListener('click', () => {
+                    navToggle.classList.toggle('is-active');
+                    globalNav.classList.toggle('is-active');
+                });
+            }
+            const statusIndicator = document.querySelector('.status-indicator');
+            setInterval(() => { statusIndicator.style.opacity = statusIndicator.style.opacity === '0.3' ? '1' : '0.3'; }, 1000);
+        });
+    </script>
+</body>
+</html>

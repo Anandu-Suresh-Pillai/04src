@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vector Void</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png.png">
+    <style>
+        :root {
+            --primary-green: #00ff41;
+            --accent-cyan: #00e5ff;
+            --danger-red: #ff4444;
+            --powerup-yellow: #ffd700;
+            --bg-black: #000000;
+            --glow-md: 0 0 15px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: var(--bg-black);
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            position: relative;
+            color: var(--primary-green);
+        }
+        #gameCanvas {
+            display: block;
+            background: var(--bg-black);
+            width: 100%;
+            height: 100%;
+            transition: transform 0.1s ease-out; /* For screen shake */
+        }
+        .ui-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            text-shadow: 0 0 8px var(--primary-green);
+            z-index: 10;
+            pointer-events: none;
+        }
+        .ui-element { text-align: center; }
+        .ui-label { font-size: 10px; opacity: 0.7; }
+        .floating-joystick {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            z-index: 15;
+            pointer-events: none;
+            display: none; /* Hidden by default */
+        }
+        .joystick-knob {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-green);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--primary-green);
+        }
+        .start-screen, .game-over-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .start-screen.visible, .game-over-screen.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .game-title {
+            font-size: 3rem;
+            letter-spacing: 0.2em;
+            text-shadow: 0 0 20px var(--primary-green);
+            animation: glitch 3s infinite;
+        }
+        .instructions, .score-display {
+            margin-top: 20px;
+            line-height: 1.8;
+            max-width: 80%;
+        }
+        .start-button, .restart-button, .gemini-button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid var(--primary-green);
+            color: var(--primary-green);
+            font-family: inherit;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3), inset 0 0 10px rgba(0, 255, 65, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .start-button:hover, .restart-button:hover, .gemini-button:hover {
+            background: var(--primary-green);
+            color: var(--bg-black);
+            box-shadow: 0 0 25px var(--primary-green);
+        }
+        .gemini-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .gemini-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .gemini-response {
+            margin-top: 20px;
+            padding: 15px;
+            max-width: 90%;
+            min-height: 80px;
+            border: 1px dashed var(--primary-green);
+            background: rgba(0, 255, 65, 0.05);
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .loading-indicator {
+            animation: blink 1s infinite;
+        }
+        @keyframes glitch {
+            2%, 64% { transform: translate(2px, 0) skew(0deg); }
+            4%, 60% { transform: translate(-2px, 0) skew(0deg); }
+            62% { transform: translate(0, 0) skew(5deg); }
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+        <nav class="global-nav" id="globalNav">
+<ul>
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="../me.html">Me</a></li>
+    <li><a href="../about.html">About</a></li>
+    <li><a href="../musings/musings.html">Musings</a></li>
+    <li><a href="arcade.html">Arcade</a></li>
+</ul>
+
+    </nav>
+
+    <div class="ui-overlay">
+        <div class="ui-element">
+            <div id="score">0</div>
+            <div class="ui-label">SCORE</div>
+        </div>
+        <div class="ui-element">
+            <div id="highScore">0</div>
+            <div class="ui-label">HIGH</div>
+        </div>
+        <div class="ui-element">
+            <div id="lives"></div>
+            <div class="ui-label">LIVES</div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    <div class="floating-joystick" id="joystick">
+        <div class="joystick-knob"></div>
+    </div>
+
+    <div class="start-screen visible" id="startScreen">
+        <h1 class="game-title" data-text="VECTOR VOID">VECTOR VOID</h1>
+        <div class="instructions">
+            <p>Left side of screen to move.</p>
+            <p>Right side of screen to fire.</p>
+        </div>
+        <button class="start-button">Start Game</button>
+    </div>
+
+    <div class="game-over-screen" id="gameOverScreen">
+        <h1 class="game-title" data-text="GAME OVER">GAME OVER</h1>
+        <div class="score-display">
+            <p>FINAL SCORE: <span id="finalScore">0</span></p>
+            <p>HIGH SCORE: <span id="finalHighScore">0</span></p>
+        </div>
+        <div class="gemini-controls">
+            <button class="gemini-button" id="analyzeBtn">✨ Analyze Performance</button>
+            <button class="gemini-button" id="waveBtn">✨ Preview Next Wave</button>
+        </div>
+        <div class="gemini-response" id="geminiResponse"></div>
+        <button class="restart-button">Restart</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- DOM Elements ---
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const livesEl = document.getElementById('lives');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const startButton = document.querySelector('.start-button');
+        const restartButton = document.querySelector('.restart-button');
+        const finalScoreEl = document.getElementById('finalScore');
+        const finalHighScoreEl = document.getElementById('finalHighScore');
+        const joystickEl = document.getElementById('joystick');
+        const joystickKnob = joystickEl.querySelector('.joystick-knob');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const waveBtn = document.getElementById('waveBtn');
+        const geminiResponseEl = document.getElementById('geminiResponse');
+
+        // --- Game State & Config ---
+        let gameState = 'start'; // 'start', 'playing', 'gameover'
+        let score, highScore, lives, player, projectiles, enemies, particles, powerUps, stars, level;
+        let joystick = { active: false, x: 0, y: 0, inputX: 0, inputY: 0 };
+        let lastShotTime = 0;
+        const shotCooldown = 150; // ms
+
+        const config = {
+            player: { size: 12, speed: 3.5, turnSpeed: 0.1, lives: 3, shieldTime: 3000 },
+            projectile: { size: 3, speed: 7 },
+            enemy: { baseSpeed: 1, spawnRate: 0.98 },
+            powerUp: { spawnChance: 0.05, size: 8 },
+            colors: {
+                player: '#00e5ff',
+                projectile: '#ffffff',
+                enemy: ['#ff4444', '#9d4edd', '#f97316'],
+                powerUp: '#ffd700',
+                particle: '#00ff41'
+            }
+        };
+
+        // --- Setup ---
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function init() {
+            score = 0;
+            highScore = localStorage.getItem('vectorVoidHighScore') || 0;
+            lives = config.player.lives;
+            level = 1;
+            
+            player = {
+                x: canvas.width / 2,
+                y: canvas.height * 0.8,
+                size: config.player.size,
+                angle: -Math.PI / 2,
+                targetAngle: -Math.PI / 2,
+                isShielded: false,
+                shieldTimer: 0
+            };
+
+            projectiles = [];
+            enemies = [];
+            particles = [];
+            powerUps = [];
+            stars = Array.from({ length: 100 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 1.5 + 0.5,
+                speed: Math.random() * 0.5 + 0.2
+            }));
+
+            updateUI();
+        }
+
+        // --- Controls ---
+        function handlePointerDown(e) {
+            if (gameState !== 'playing') return;
+            const x = e.clientX;
+            
+            if (x < canvas.width / 2) {
+                joystick.active = true;
+                joystickEl.style.display = 'block';
+                joystickEl.style.left = `${e.clientX - 60}px`;
+                joystickEl.style.top = `${e.clientY - 60}px`;
+                joystick.x = e.clientX;
+                joystick.y = e.clientY;
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!joystick.active) return;
+            const dx = e.clientX - joystick.x;
+            const dy = e.clientY - joystick.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxDist = 50;
+
+            if (dist > maxDist) {
+                joystick.inputX = (dx / dist) * maxDist;
+                joystick.inputY = (dy / dist) * maxDist;
+            } else {
+                joystick.inputX = dx;
+                joystick.inputY = dy;
+            }
+            joystickKnob.style.transform = `translate(${joystick.inputX}px, ${joystick.inputY}px)`;
+            player.targetAngle = Math.atan2(dy, dx);
+        }
+
+        function handlePointerUp(e) {
+            const x = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+
+            if (gameState === 'playing' && x >= canvas.width / 2) {
+                fireProjectile();
+            }
+
+            if (joystick.active) {
+                joystick.active = false;
+                joystick.inputX = 0;
+                joystick.inputY = 0;
+                joystickEl.style.display = 'none';
+                joystickKnob.style.transform = `translate(0,0)`;
+            }
+        }
+
+        canvas.addEventListener('mousedown', handlePointerDown);
+        canvas.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+        canvas.addEventListener('touchstart', (e) => handlePointerDown(e.touches[0]));
+        canvas.addEventListener('touchmove', (e) => handlePointerMove(e.touches[0]));
+        window.addEventListener('touchend', handlePointerUp);
+
+        // --- Gemini API Integration ---
+        async function callGeminiAPI(prompt, button) {
+            geminiResponseEl.innerHTML = '<span class="loading-indicator">ANALYZING DATA...</span>';
+            button.disabled = true;
+            const apiKey = ""; // API key will be injected by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            try {
+                let response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    typewriterEffect(geminiResponseEl, text);
+                } else {
+                    geminiResponseEl.textContent = 'Error: No response from AI. Please try again.';
+                }
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                geminiResponseEl.textContent = 'Connection error. Could not reach the AI mainframe.';
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function typewriterEffect(element, text) {
+            element.innerHTML = "";
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, 20);
+                }
+            }
+            type();
+        }
+
+        analyzeBtn.addEventListener('click', () => {
+            const prompt = `I just played a retro space shooter called Vector Void. My final score was ${score}. My previous high score was ${highScore}. Give me a short, witty, cyberpunk-themed analysis of my performance in 2-3 sentences. Be a bit sarcastic if the score is low.`;
+            callGeminiAPI(prompt, analyzeBtn);
+        });
+
+        waveBtn.addEventListener('click', () => {
+            const prompt = `In the retro space shooter game Vector Void, I just died on level ${level}. In a cool, cyberpunk style, creatively describe the next wave of enemies I would have faced. Be specific and invent 1-2 new enemy types. Keep it to 3 sentences.`;
+            callGeminiAPI(prompt, waveBtn);
+        });
+
+        // --- Game Logic ---
+        function fireProjectile() {
+            const now = Date.now();
+            if (now - lastShotTime < shotCooldown) return;
+            lastShotTime = now;
+
+            projectiles.push({
+                x: player.x + Math.cos(player.angle) * player.size,
+                y: player.y + Math.sin(player.angle) * player.size,
+                vx: Math.cos(player.angle) * config.projectile.speed,
+                vy: Math.sin(player.angle) * config.projectile.speed,
+                size: config.projectile.size
+            });
+            vibrate(20);
+        }
+
+        function spawnEnemy() {
+            if (Math.random() > config.enemy.spawnRate) {
+                const side = Math.floor(Math.random() * 4);
+                let x, y;
+                if (side === 0) { x = Math.random() * canvas.width; y = -20; }
+                else if (side === 1) { x = canvas.width + 20; y = Math.random() * canvas.height; }
+                else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 20; }
+                else { x = -20; y = Math.random() * canvas.height; }
+
+                const angle = Math.atan2(player.y - y, player.x - x);
+                const speed = config.enemy.baseSpeed + Math.random() * 1.5 + (level - 1) * 0.2;
+                
+                enemies.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, size: Math.random() * 10 + 10, color: config.colors.enemy[Math.floor(Math.random() * config.colors.enemy.length)] });
+            }
+        }
+        
+        function spawnPowerUp(x, y) {
+             powerUps.push({ x, y, size: config.powerUp.size, life: 5000 });
+        }
+
+        function createExplosion(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                particles.push({ x, y, vx: (Math.random() - 0.5) * (Math.random() * 6), vy: (Math.random() - 0.5) * (Math.random() * 6), size: Math.random() * 2 + 1, color: color, life: Math.random() * 40 + 20 });
+            }
+            screenShake(5, 150);
+            vibrate(100);
+        }
+
+        function update() {
+            if (gameState !== 'playing') return;
+
+            if (joystick.active) {
+                player.x += joystick.inputX / 50 * config.player.speed;
+                player.y += joystick.inputY / 50 * config.player.speed;
+            }
+            player.x = Math.max(0, Math.min(canvas.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height, player.y));
+            
+            let angleDiff = player.targetAngle - player.angle;
+            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+            player.angle += angleDiff * config.player.turnSpeed;
+
+            if (player.isShielded) {
+                player.shieldTimer -= 16;
+                if (player.shieldTimer <= 0) player.isShielded = false;
+            }
+
+            stars.forEach(s => { s.y += s.speed; if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; } });
+            projectiles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) projectiles.splice(i, 1); });
+            enemies.forEach(e => { e.x += e.vx; e.y += e.vy; });
+            spawnEnemy();
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if (p.life <= 0) particles.splice(i, 1); });
+            powerUps.forEach((p, i) => { p.life -= 16; if (p.life <= 0) powerUps.splice(i, 1); });
+            checkCollisions();
+            updateUI();
+        }
+
+        function checkCollisions() {
+            projectiles.forEach((p, pi) => {
+                enemies.forEach((e, ei) => {
+                    if (dist(p.x, p.y, e.x, e.y) < e.size) {
+                        createExplosion(e.x, e.y, e.color);
+                        projectiles.splice(pi, 1);
+                        enemies.splice(ei, 1);
+                        score += 100;
+                        if (Math.random() < config.powerUp.spawnChance) spawnPowerUp(e.x, e.y);
+                    }
+                });
+            });
+
+            if (!player.isShielded) {
+                enemies.forEach((e, ei) => {
+                    if (dist(player.x, player.y, e.x, e.y) < player.size + e.size) {
+                        createExplosion(player.x, player.y, config.colors.player, 40);
+                        enemies.splice(ei, 1);
+                        lives--;
+                        if (lives <= 0) endGame();
+                    }
+                });
+            }
+            
+            powerUps.forEach((p, pi) => {
+                if (dist(player.x, player.y, p.x, p.y) < player.size + p.size) {
+                    player.isShielded = true;
+                    player.shieldTimer = config.player.shieldTime;
+                    powerUps.splice(pi, 1);
+                    vibrate(50);
+                }
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            stars.forEach(s => ctx.fillRect(s.x, s.y, s.size, s.size));
+            if (gameState !== 'playing') return;
+            particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life / 60; ctx.fillRect(p.x, p.y, p.size, p.size); });
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = config.colors.projectile;
+            projectiles.forEach(p => { ctx.fillRect(p.x, p.y, p.size, p.size); });
+            powerUps.forEach(p => {
+                ctx.fillStyle = config.colors.powerUp;
+                ctx.shadowColor = config.colors.powerUp;
+                ctx.shadowBlur = 15;
+                ctx.globalAlpha = p.life / 5000;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+            });
+            enemies.forEach(e => {
+                ctx.fillStyle = e.color;
+                ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2); ctx.fill();
+            });
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+            ctx.fillStyle = config.colors.player;
+            ctx.beginPath();
+            ctx.moveTo(player.size, 0);
+            ctx.lineTo(-player.size / 2, -player.size / 1.5);
+            ctx.lineTo(-player.size / 2, player.size / 1.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            if (player.isShielded) {
+                ctx.strokeStyle = config.colors.player;
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = player.shieldTimer / config.player.shieldTime;
+                ctx.beginPath(); ctx.arc(player.x, player.y, player.size + 10, 0, Math.PI * 2); ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function updateUI() {
+            scoreEl.textContent = score;
+            highScoreEl.textContent = highScore;
+            livesEl.innerHTML = Array(lives).fill('⛨').join('');
+            level = Math.floor(score / 1000) + 1;
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            startScreen.classList.remove('visible');
+            gameOverScreen.classList.remove('visible');
+            geminiResponseEl.innerHTML = '';
+            init();
+        }
+
+        function endGame() {
+            gameState = 'gameover';
+            vibrate([200, 50, 200]);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('vectorVoidHighScore', highScore);
+            }
+            finalScoreEl.textContent = score;
+            finalHighScoreEl.textContent = highScore;
+            gameOverScreen.classList.add('visible');
+        }
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+        function dist(x1, y1, x2, y2) { return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2); }
+        function vibrate(duration) { if (navigator.vibrate) navigator.vibrate(duration); }
+        function screenShake(intensity, duration) {
+            canvas.style.transform = `translate(${Math.random() * intensity - intensity/2}px, ${Math.random() * intensity - intensity/2}px)`;
+            setTimeout(() => canvas.style.transform = 'translate(0,0)', duration);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        init();
+        gameLoop();
+    </script>
+</body>
+</html>

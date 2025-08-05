@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Me</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --primary-green: #00ff41;
+          --dark-green: #008f11;
+          --bg-black: #000000;
+          --glitch-red: #ff003c;
+          --glitch-cyan: #00e5ff;
+          --glow-md: 0 0 15px rgba(0, 255, 65, 0.7);
+          --mono-font: 'Share Tech Mono', 'Courier New', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-black); color: var(--primary-green); font-family: var(--mono-font); overflow-x: hidden; }
+        a { color: var(--primary-green); text-decoration: none; text-shadow: var(--glow-md); transition: color 0.3s ease, background-color 0.3s ease; }
+        a:hover { color: var(--bg-black); background: var(--primary-green); padding: 2px 4px; }
+        .main-container { display: flex; flex-direction: column; min-height: 100vh; }
+        .content-wrapper { max-width: 900px; width: 100%; margin: 0 auto; padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .content-display { flex: 1; display: flex; align-items: center; justify-content: center; margin: 40px 0; }
+        .content-frame { width: 100%; background: rgba(0, 255, 65, 0.02); border: 1px solid var(--dark-green); position: relative; padding: 30px 35px; overflow: hidden; }
+        .scanline-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%); background-size: 100% 6px; animation: scanline 8s linear infinite; opacity: 0.2; }
+        @keyframes scanline { from { background-position: 0 0; } to { background-position: 0 100vh; } }
+        .frame-header { margin-bottom: 20px; text-align: center; }
+        .glitch { position: relative; font-size: clamp(2rem, 5vw, 3rem); font-weight: bold; text-transform: uppercase; letter-spacing: 0.2em; color: var(--primary-green); text-shadow: var(--glow-md); animation: glitch-skew 1s infinite linear alternate-reverse; }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-black); overflow: hidden; }
+        .glitch::before { left: 2px; text-shadow: -2px 0 var(--glitch-red); animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -2px 0 var(--glitch-cyan), 2px 2px var(--glitch-red); animation: glitch-anim-2 3s infinite linear alternate-reverse; }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(15% 0 86% 0); } 20% { clip-path: inset(50% 0 23% 0); } 40% { clip-path: inset(22% 0 49% 0); } 60% { clip-path: inset(89% 0 3% 0); } 80% { clip-path: inset(45% 0 45% 0); } 100% { clip-path: inset(73% 0 9% 0); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(79% 0 13% 0); } 20% { clip-path: inset(40% 0 45% 0); } 40% { clip-path: inset(83% 0 6% 0); } 60% { clip-path: inset(33% 0 34% 0); } 80% { clip-path: inset(5% 0 89% 0); } 100% { clip-path: inset(92% 0 4% 0); } }
+        @keyframes glitch-skew { 0% { transform: skewX(0deg); } 5% { transform: skewX(2deg); } 10% { transform: skewX(-2deg); } 15% { transform: skewX(0deg); } 100% { transform: skewX(0deg); } }
+        .content-divider { height: 2px; background: var(--dark-green); box-shadow: var(--glow-md); margin-bottom: 25px; }
+        .post-content { line-height: 1.8; font-size: 1.1rem; }
+        .post-content h3 { color: var(--primary-green); text-shadow: var(--glow-md); letter-spacing: 0.1em; text-transform: uppercase; margin: 1.5em 0 0.7em; padding-bottom: 5px; display: inline-block; }
+        .post-content h3::after { content: ' _'; animation: blink 1s infinite; }
+        .post-content p { margin-bottom: 1.2em; }
+        .post-content strong { color: var(--primary-green); font-weight: bold; text-shadow: var(--glow-md); }
+        .post-content ul { list-style: none; padding-left: 0; margin-bottom: 1.2em; }
+        .post-content ul li { position: relative; padding-left: 25px; margin-bottom: 8px; }
+        .post-content ul li::before { content: '■'; position: absolute; left: 0; color: var(--primary-green); text-shadow: var(--glow-md); transition: transform 0.3s ease; }
+        .post-content ul li:hover::before { transform: rotate(180deg) scale(1.2); }
+        .corner-brackets { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+        .bracket { position: absolute; font-size: 1.2rem; color: var(--dark-green); line-height: 1; }
+        .bracket.top-left { top: 5px; left: 5px; } .bracket.top-right { top: 5px; right: 5px; } .bracket.bottom-left { bottom: 5px; left: 5px; } .bracket.bottom-right { bottom: 5px; right: 5px; }
+        .terminal-footer { flex: 0 0 auto; padding: 30px 0; border-top: 1px solid var(--dark-green); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .system-status { display: flex; align-items: center; gap: 10px; }
+        .status-indicator { width: 12px; height: 12px; background: var(--primary-green); border-radius: 50%; box-shadow: var(--glow-md); transition: opacity 0.3s ease; }
+        .status-text { font-size: 0.9rem; letter-spacing: 0.1em; }
+        .command-line { color: var(--primary-green); text-shadow: var(--glow-md); }
+        .prompt, .typing-cursor, .post-content h3::after { animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        /* Terminal command styling for content sections */
+        .cmd-prompt { color: var(--primary-green); text-shadow: var(--glow-md); font-weight: bold; }
+        .cmd-section { margin-bottom: 1.5em; }
+        .cmd-section p { margin-left: 15px; margin-bottom: 0.5em; }
+        
+        /* --- GLOBAL NAVIGATION MENU --- */
+        .nav-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid var(--dark-green);
+            z-index: 1001; /* Above everything */
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        .nav-toggle:hover {
+            background: rgba(0, 255, 65, 0.2);
+            border-color: var(--primary-green);
+        }
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--primary-green);
+            transition: all 0.3s ease;
+        }
+        .nav-toggle.is-active span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+        .nav-toggle.is-active span:nth-child(2) {
+            opacity: 0;
+        }
+        .nav-toggle.is-active span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+        .global-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .global-nav.is-active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .global-nav ul {
+            list-style: none;
+            text-align: center;
+            padding: 0;
+        }
+        .global-nav li {
+            margin: 20px 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .global-nav.is-active li {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Staggered animation for list items */
+        .global-nav.is-active li:nth-child(1) { transition-delay: 0.1s; }
+        .global-nav.is-active li:nth-child(2) { transition-delay: 0.15s; }
+        .global-nav.is-active li:nth-child(3) { transition-delay: 0.2s; }
+        .global-nav.is-active li:nth-child(4) { transition-delay: 0.25s; }
+        .global-nav.is-active li:nth-child(5) { transition-delay: 0.3s; }
+        .global-nav a {
+            font-size: 2rem;
+            color: var(--primary-green);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .global-nav a:hover {
+            background: var(--primary-green);
+            color: var(--bg-black);
+            text-shadow: none;
+            box-shadow: 0 0 25px var(--primary-green);
+        }
+
+        @media (max-width: 768px) { 
+            .content-wrapper { padding: 15px; } 
+            .content-display { margin: 20px 0; } 
+            .content-frame { padding: 20px; } 
+            .terminal-footer { flex-direction: column; text-align: center; padding-top: 20px; } 
+            .nav-toggle { top: 15px; right: 15px; }
+            .global-nav a { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle Navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <nav class="global-nav" id="globalNav">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="me.html">Me</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="musings/musings.html">Musings</a></li>
+            <li><a href="arcade/arcade.html">Arcade</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-wrapper">
+            <main class="content-display">
+                <article class="content-frame">
+                    <div class="scanline-overlay"></div>
+                    <div class="frame-header">
+                        <h1 class="post-title glitch" data-text="ME">me</h1>
+                    </div>
+                    <div class="content-divider"></div>
+                    <div class="post-content" id="post-content-area">
+                        <!-- Content will be typed here by JavaScript -->
+                    </div>
+                    <template id="content-template">
+                        <div class="cmd-section">
+                            <p><span class="cmd-prompt">anandu_suresh_pillai</span></p>
+                        </div>
+                        <div class="cmd-section">
+                            <h3>> bio</h3>
+                            <p>Currently studying Automation & Robotics @ Amrita.</p>
+                            <p>Builds robots, designs mechanisms, writes code that (mostly) works.</p>
+                            <p>Enjoys tinkering with ROS2, SolidWorks, Fusion360, C++, Python.</p>
+                        </div>
+                        <div class="cmd-section">
+                            <h3>> likes</h3>
+                            <p>movies, music, engines (of all kinds).</p>
+                            <p>programming (as long as I know what's going on).</p>
+                            <p>reading (in intense but irregular bursts).</p>
+                        </div>
+                        <div class="cmd-section">
+                            <h3>> status</h3>
+                            <p>exploring. building. occasionally breaking things on purpose to learn.</p>
+                        </div>
+                        <div class="cmd-section">
+                            <h3>> connect</h3>
+                            <p>
+                                <a href="https://www.linkedin.com/in/anandu-suresh-pillai/" target="_blank">LinkedIn</a> |
+                                <a href="https://www.instagram.com/deus._ex._.machina/profilecard/?igsh=cjA2ZWVxcWRkcndt" target="_blank">Instagram</a> |
+                                <a href="mailto:vishnukhk2004@gmail.com">Email</a>
+                            </p>
+                        </div>
+                    </template>
+                    <div class="corner-brackets">
+                        <span class="bracket top-left">┌</span><span class="bracket top-right">┐</span>
+                        <span class="bracket bottom-left">└</span><span class="bracket bottom-right">┘</span>
+                    </div>
+                </article>
+            </main>
+            <footer class="terminal-footer">
+                <div class="system-status">
+                    <span class="status-indicator"></span><span class="status-text">SYSTEM ONLINE</span>
+                </div>
+                <div class="command-line">
+                    <span class="prompt">ആനന്ദു </span><span class="typing-cursor">█</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Global Nav Toggle ---
+            const navToggle = document.getElementById('navToggle');
+            const globalNav = document.getElementById('globalNav');
+            if (navToggle && globalNav) {
+                navToggle.addEventListener('click', () => {
+                    navToggle.classList.toggle('is-active');
+                    globalNav.classList.toggle('is-active');
+                });
+            }
+
+            // --- Status Indicator Animation ---
+            const statusIndicator = document.querySelector('.status-indicator');
+            setInterval(() => { 
+                statusIndicator.style.opacity = statusIndicator.style.opacity === '0.3' ? '1' : '0.3'; 
+            }, 1000);
+
+            // --- Simple and Working Typewriter Effect ---
+            const contentArea = document.getElementById('post-content-area');
+            const template = document.getElementById('content-template');
+            
+            if (contentArea && template) {
+                // First, set the content invisibly to establish the DOM structure
+                contentArea.innerHTML = template.innerHTML;
+                contentArea.style.opacity = '0';
+                
+                // Get all text nodes for typing effect
+                function getTextNodes(node) {
+                    let textNodes = [];
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                        textNodes.push(node);
+                    } else {
+                        for (let child of node.childNodes) {
+                            textNodes.push(...getTextNodes(child));
+                        }
+                    }
+                    return textNodes;
+                }
+                
+                const textNodes = getTextNodes(contentArea);
+                const originalTexts = textNodes.map(node => node.textContent);
+                
+                // Clear all text content but keep structure
+                textNodes.forEach(node => node.textContent = '');
+                contentArea.style.opacity = '1';
+                
+                let currentNodeIndex = 0;
+                let currentCharIndex = 0;
+                
+                function typeWriter() {
+                    if (currentNodeIndex >= textNodes.length) return;
+                    
+                    const currentNode = textNodes[currentNodeIndex];
+                    const targetText = originalTexts[currentNodeIndex];
+                    
+                    if (currentCharIndex < targetText.length) {
+                        currentNode.textContent = targetText.substring(0, currentCharIndex + 1);
+                        currentCharIndex++;
+                        setTimeout(typeWriter, 20);
+                    } else {
+                        currentNodeIndex++;
+                        currentCharIndex = 0;
+                        setTimeout(typeWriter, 50);
+                    }
+                }
+                
+                typeWriter();
+            }
+        });
+    </script>
+</body>
+</html>
